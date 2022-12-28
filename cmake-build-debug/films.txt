@@ -154,7 +154,7 @@ Poland, France
 drama, military
 8.5
 #
-Lord of the rings, Brotherhood of the ring
+Lord of the rings
 2001
 USA, New Zealand
 fantasy, adventure
@@ -165,3 +165,4 @@ Only "old men" go into battle
 USSR
 military, drama
 8.7
+#&
