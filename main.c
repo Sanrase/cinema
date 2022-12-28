@@ -227,13 +227,29 @@ int main() {
     init(&list);
     addFilmList(&list);
     loopList(&list);
+    struct Node *cur = list.head;
+
     while(1){
-        struct Film *film;
-        struct List *cur;
-
-
+        print(cur->film);
+        printf("\n\tLeft \"A\" Right \"D\" Exit \"E\"\n");
+        char answer;
+        scanf("%c", &answer);
+        if(answer == (char)101 || answer == (char)69){
+            break;
+        }
+        while(1){
+            if (answer == (char)65 || answer == (char)97) {
+                cur = cur->back;
+                break;
+            }else if (answer == (char)68 || answer == (char)100){
+                cur = cur->next;
+                break;
+            }else{
+                printf("\tWrong answer\n");
+                break;
+            }
+        }
     }
-
 
     return 0;
 }
