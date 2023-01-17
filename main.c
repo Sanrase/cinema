@@ -47,8 +47,7 @@ void push(struct List *list, struct Film *film){
     }
 }
 
-void addFilmList(struct List *list) {
-    FILE *films = fopen("films.txt", "r");
+void addFilmList(struct List *list,FILE *films) {
     char c = 'c';
     int flag = 0;
 
@@ -104,6 +103,11 @@ void addFilmList(struct List *list) {
 void loopList(struct List *list){
     list->head->back = list->tail;
     list->tail->next = list->head;
+}
+
+void unLoop(struct List *list){
+    list->head->back = NULL;
+    list->tail->next = NULL;
 }
 
 int len(const char *string){
@@ -271,11 +275,11 @@ int login_user (char *username, char *password){
                         c = fgetc(file);
                     }
                     if(flag){
-                        printf("Validation failed\n");
+                        printf("\t\t\t\tValidation failed\n");
 
                         return 1;
                     }else{
-                        printf("Validation succeeded\n");
+                        printf("\t\t\t\tValidation succeeded\n");
 
                         return 0;
                     }
@@ -286,42 +290,95 @@ int login_user (char *username, char *password){
     return 1;
 }
 
-
 void add_film_favorites(struct Film film, char *username){
     char filename[50];
     sprintf(filename, "favorites_%s.txt", username);
     FILE *file = fopen(filename, "a");
 
     fprintf(file, "%s\n%s\n%s\n%s\n%s\n#\n", film.title, film.year, film.country, film.genre, film.rating);
+    fflush(file);
+}
+
+void del_move(struct Node *film, struct List *list, char *filename){
+    FILE *file = fopen(filename, "w");
+    unLoop(list);
+    if(film->back == NULL){
+        list->head = film->next;
+    }else if(film->next == NULL){
+        list->tail = film->back;
+    }else{
+        film->back = film->next;
+    }
+    free(film);
+
+    struct Node *cur = list->head;
+    while(cur != NULL){
+        fprintf(file, "%s\n%s\n%s\n%s\n%s\n#\n", cur->film.title, cur->film.year, cur->film.country, cur->film.genre, cur->film.rating);
+        cur = cur->next;
+    }
+    loopList(list);
+    fflush(file);
 }
 
 int main() {
-    FILE *input;
+    FILE *moves = fopen("films.txt", "r");
+    FILE *favorites_user;
 
     struct List list;
+    struct List favorites_list;
+    init(&favorites_list);
     init(&list);
-    addFilmList(&list);
+    addFilmList(&list, moves);
     loopList(&list);
+
+    struct Node *cur_favorites;
     struct Node *cur = list.head;
+
     int flag = 0;
-    int check_login = 1, favorites = 1;
+    int check_login = 1, favorites = 0;
+
     char username[256];
     char password[256];
+    char filename[50];
 
-    while(1){
+    int is_admin = 0;
+
+    while(1) {
         char answer;
-        if(check_login == 0){
-            printf("\tYou are logged in: %s", username);
+
+        if (strcmp(username, "admin") == 0 && strcmp(password, "admin") == 0) {
+            is_admin = 1;
+        }
+
+        if (!check_login && favorites) {
+            printf("\t\t\t     You are logged in: %s\n", username);
+            printf("\t\t\t\tFavorites list\n");
+            printf("\tDelete Movie \"X\"\n");
+        }else if (!check_login, is_admin) {
+            printf("\t\t\t     You are logged in: %s\n", username);
+        }else if (!check_login) {
+            printf("\t\t\t   You are logged in: %s\n", username);
             printf("\tList favorites \"F\" Add to favorites\"S\"\n");
         }
-        if(favorites){
-            print(cur->film);
-        }else{
 
+        if (!favorites) {
+            print(cur->film);
+        } else {
+            print(cur_favorites->film);
         }
-        printf("\n\tLeft \"A\"; Right \"D\"; Exit \"E\"\n");
-        if(check_login == 1){
-            printf("\tRegister \"R\"; Login \"L\"");
+
+        if (favorites) {
+            printf("\n\tLeft \"A\"; Right \"D\"; All moves: \"B\"; Exit \"E\"\n");
+        }else if(!check_login && is_admin){
+            printf("\n\tLeft \"A\"; Right \"D\"; Log out \"O\"; Delete Movie \"Z\"; Exit \"E\"\n");
+        }else if (!favorites && !check_login) {
+            printf("\n\tLeft \"A\"; Right \"D\"; Log out \"O\"; Exit \"E\"\n");
+        }else{
+            printf("\n\tLeft \"A\"; Right \"D\"; Exit \"E\"\n");
+        }
+
+        if(check_login){
+            printf("\tRegister \"R\"; Login \"L\"\n");
         }
         scanf("%c", &answer);
         fflush(stdin);
@@ -331,13 +388,25 @@ int main() {
         }else{
             while(1) {
                 if (answer == 'a' || answer == 'A') {
-                    cur = cur->back;
-                    fflush(stdin);
-                    break;
+                    if (favorites) {
+                        cur_favorites = cur_favorites->back;
+                        fflush(stdin);
+                        break;
+                    } else {
+                        cur = cur->back;
+                        fflush(stdin);
+                        break;
+                    }
                 } else if (answer == 'd' || answer == 'D') {
-                    cur = cur->next;
-                    fflush(stdin);
-                    break;
+                    if (favorites) {
+                        cur_favorites = cur_favorites->next;
+                        fflush(stdin);
+                        break;
+                    } else {
+                        cur = cur->next;
+                        fflush(stdin);
+                        break;
+                    }
                 } else if ((answer == 'r' || answer == 'R') && (check_login)) {
                     printf("Enter a username: ");
                     scanf("%s", username);
@@ -358,15 +427,39 @@ int main() {
                     check_login = login_user(username, password);
                     fflush(stdin);
                     break;
-                } else if ((answer == 'f' || answer == 'F') && (!check_login)) {
+                } else if ((answer == 'f' || answer == 'F') && (!check_login) && (!favorites)) {
+                    favorites = 1;
+                    sprintf(filename, "favorites_%s.txt", username);
+                    favorites_user = fopen(filename, "r");
+                    addFilmList(&favorites_list, favorites_user);
+                    loopList(&favorites_list);
+                    cur_favorites = favorites_list.head;
+                    fflush(stdin);
+                    break;
+                } else if ((answer == 'x' || answer == 'X') && (!check_login) && favorites) {
+                    del_move(cur_favorites, &favorites_list, filename);
+                    cur_favorites = favorites_list.head;
+                    fflush(stdin);
+                    break;
+                } else if ((answer == 's' || answer == 'S') && (!check_login) && (!favorites)) {
+                    add_film_favorites(cur->film, username);
+                    printf("\n\tMovie added to favorites!\n");
+                    fflush(stdin);
+                    break;
+                } else if ((answer == 'b' || answer == 'B') && (favorites)) {
                     favorites = 0;
                     fflush(stdin);
                     break;
-                }else if((answer == 's' || answer == 'S') && (!check_login)){
-                    add_film_favorites(cur->film, username);
+                } else if ((answer == 'o' || answer == 'O') && (!check_login)) {
+                    check_login = 1;
                     fflush(stdin);
                     break;
-                }else{
+                }else if((answer == 'z' || answer == 'Z') && (!check_login) && is_admin){
+                    del_move(cur, &list, "films.txt");
+                    cur = list.head;
+                    fflush(stdin);
+                    break;
+                } else{
                     printf("Wrong answer\n");
                     fflush(stdin);
                     break;

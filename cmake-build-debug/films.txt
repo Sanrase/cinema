@@ -76,7 +76,7 @@ USA
 thriller, comedy
 8.6
 #
-Operation "Y" and other adventures of Shurik
+Operation "Y" and other adventures of Sh1965
 1965
 USSR
 comedy, melodrama
@@ -100,9 +100,9 @@ USA, UK
 fantasy, drama
 8.6
 #
-The Lord of the Rings: The Return of the King
+The Lord of the Rings: The Return of the2003
 2003
-New Zealand, USA
+New Zealand, USfantasy, adventure
 fantasy, adventure
 8.6
 #
@@ -156,7 +156,7 @@ drama, military
 #
 Lord of the rings
 2001
-USA, New Zealand
+USA, New Zealanfantasy, adventure
 fantasy, adventure
 8.6
 #
