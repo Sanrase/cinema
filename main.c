@@ -320,6 +320,17 @@ void del_move(struct Node *film, struct List *list, char *filename){
     fflush(file);
 }
 
+void free_list(struct List *list){
+    unLoop(list);
+    struct Node *temp = list->head;
+
+    while (list->head != NULL){
+        list->head = list->head->next;
+        free(temp);
+        temp = list->head;
+    }
+}
+
 int main() {
     FILE *moves = fopen("films.txt", "r");
     FILE *favorites_user;
@@ -384,6 +395,9 @@ int main() {
         fflush(stdin);
 
         if(answer == 'e' || answer == 'E'){
+            free_list(&list);
+            free_list(&favorites_list);
+            fclose(moves);
             break;
         }else{
             while(1) {
