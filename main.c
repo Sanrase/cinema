@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <malloc.h>
+#include <string.h>
 
 struct Film{
     char title[40];
@@ -220,6 +221,80 @@ void print(struct Film film){
     printf("\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s", up, mid, title, year, country, genre, rating, mid, down);
 }
 
+int register_user (char *username, char *password){
+    FILE *file = fopen("credentials.txt", "a");
+    if(file == NULL){
+        printf("Error opening file!\n");
+        return 1;
+    }
+
+    fprintf(file, "%s:%s\n", username, password);
+    fclose(file);
+
+    printf("Registration complete!\n");
+    return 0;
+}
+
+int login_user (char *username, char *password){
+    FILE *file = fopen("credentials.txt", "r");
+    if(file == NULL){
+        printf("Error opening file!\n");
+        return 1;
+    }
+
+    char c = 'c';
+    while(c != '\377'){
+        c = fgetc(file);
+        int flag = 0;
+        while(c != ':'){
+            for(int i = 0; i < strlen(username); i++){
+                if(c != username[i]){
+                    flag = 1;
+                    break;
+                }
+                c = fgetc(file);
+            }
+            if(flag){
+                while(c != '\n'){
+                    c = fgetc(file);
+                }
+                break;
+            }else{
+                c = fgetc(file);
+                while(c != '\n'){
+                    for(int i = 0; i < strlen(password); i++){
+                        if(c != password[i]){
+                            flag = 1;
+                            break;
+                        }
+
+                        c = fgetc(file);
+                    }
+                    if(flag){
+                        printf("Validation failed\n");
+
+                        return 1;
+                    }else{
+                        printf("Validation succeeded\n");
+
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+
+void add_film_favorites(struct Film film, char *username){
+    char filename[50];
+    sprintf(filename, "favorites_%s.txt", username);
+    FILE *file = fopen(filename, "a");
+
+    fprintf(file, "%s\n%s\n%s\n%s\n%s\n#\n", film.title, film.year, film.country, film.genre, film.rating);
+}
+
 int main() {
     FILE *input;
 
@@ -229,26 +304,71 @@ int main() {
     loopList(&list);
     struct Node *cur = list.head;
     int flag = 0;
+    int check_login = 1, favorites = 1;
+    char username[256];
+    char password[256];
 
     while(1){
         char answer;
-        print(cur->film);
+        if(check_login == 0){
+            printf("\tYou are logged in: %s", username);
+            printf("\tList favorites \"F\" Add to favorites\"S\"\n");
+        }
+        if(favorites){
+            print(cur->film);
+        }else{
+
+        }
         printf("\n\tLeft \"A\"; Right \"D\"; Exit \"E\"\n");
+        if(check_login == 1){
+            printf("\tRegister \"R\"; Login \"L\"");
+        }
         scanf("%c", &answer);
         fflush(stdin);
 
         if(answer == 'e' || answer == 'E'){
             break;
         }else{
-            while(1){
-                if(answer == 'a' || answer == 'A'){
+            while(1) {
+                if (answer == 'a' || answer == 'A') {
                     cur = cur->back;
+                    fflush(stdin);
                     break;
-                }else if (answer == 'd' || answer == 'D'){
+                } else if (answer == 'd' || answer == 'D') {
                     cur = cur->next;
+                    fflush(stdin);
+                    break;
+                } else if ((answer == 'r' || answer == 'R') && (check_login)) {
+                    printf("Enter a username: ");
+                    scanf("%s", username);
+
+                    printf("Enter a password: ");
+                    scanf("%s", password);
+
+                    register_user(username, password);
+                    fflush(stdin);
+                    break;
+                } else if ((answer == 'l' || answer == 'L') && (check_login)) {
+                    printf("Enter a username: ");
+                    scanf("%s", username);
+
+                    printf("Enter a password: ");
+                    scanf("%s", password);
+
+                    check_login = login_user(username, password);
+                    fflush(stdin);
+                    break;
+                } else if ((answer == 'f' || answer == 'F') && (!check_login)) {
+                    favorites = 0;
+                    fflush(stdin);
+                    break;
+                }else if((answer == 's' || answer == 'S') && (!check_login)){
+                    add_film_favorites(cur->film, username);
+                    fflush(stdin);
                     break;
                 }else{
                     printf("Wrong answer\n");
+                    fflush(stdin);
                     break;
                 }
             }
